@@ -112,7 +112,7 @@ public class SignatureUtil {
                 // SHA1 Base64
                 md = MessageDigest.getInstance("SHA");
                 md.update(sig.toByteArray());
-                signature.append(byteArrayToHex(Base64.encode(md.digest(), 0)));
+                signature.append(new String(Base64.encode(md.digest(), 0)));
             }
         } catch (Exception ignored) {
         }
