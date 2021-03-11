@@ -1,0 +1,50 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    signingConfigs {
+        debug {
+            storeFile file('D:\\Android\\AppInfo\\keystore.jks')
+            storePassword '123456'
+            keyAlias 'Info'
+            keyPassword '123456'
+        }
+        release {
+            storeFile file('D:\\Android\\AppInfo\\keystore.jks')
+            storePassword '123456'
+            keyAlias 'Info'
+            keyPassword '123456'
+        }
+    }
+    compileSdkVersion 30
+    buildToolsVersion "30.0.3"
+
+    defaultConfig {
+        applicationId "cm.cym.appinfo"
+        minSdkVersion 21
+        targetSdkVersion 30
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    // 约束布局是真的好用，可惜加了apk就大了2mb
+//    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    // recyclerView也比listView好用，可惜加了apk就大了700kb
+//    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+}
