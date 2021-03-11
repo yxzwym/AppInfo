@@ -29,6 +29,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.Locale;
 
 import cm.cym.packinfo.list.AppAdapter;
 import cm.cym.packinfo.list.AppBean;
@@ -237,7 +238,8 @@ public class MainActivity extends Activity {
                 }
             }
             // 筛选包名和APP名
-            if (bean.getAppName().contains(mSearchText) || bean.getPackName().contains(mSearchText)) {
+            if (bean.getAppName().toUpperCase(Locale.ROOT).contains(mSearchText.toUpperCase(Locale.ROOT))
+                    || bean.getPackName().toUpperCase(Locale.ROOT).contains(mSearchText.toUpperCase(Locale.ROOT))) {
                 mShowList.add(bean);
             }
         }
