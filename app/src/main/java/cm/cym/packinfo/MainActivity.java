@@ -8,14 +8,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
-import android.content.pm.SigningInfo;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
-import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.LinearLayout;
@@ -25,8 +21,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Toolbar;
 
-import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Locale;
@@ -46,8 +43,8 @@ public class MainActivity extends Activity {
 
     private Context mContext;
 
-    // 系统获取的包名列表
-    private List<String> mPackNames;
+    // 系统获取的包列表
+    private List<PackageInfo> mPacks;
 
     // APP列表
     private List<AppBean> mAppList;// 所有的APP列表
@@ -86,7 +83,7 @@ public class MainActivity extends Activity {
         SP.init(getApplicationContext());
 
         // 初始化列表
-        mPackNames = new ArrayList<>();
+        mPacks = new ArrayList<>();
         mAppList = new ArrayList<>();
         mShowList = new ArrayList<>();
         mAdapter = new AppAdapter(this, 0, mShowList);
@@ -95,7 +92,7 @@ public class MainActivity extends Activity {
         list_view.setOnItemClickListener((parent, view, position, id) -> {
             AppBean bean = mShowList.get(position);
             String packName = bean.getPackName();
-            showSignatureDialog(packName);
+            showAppDialog(packName);
         });
 
         // 获取APP列表
@@ -144,9 +141,12 @@ public class MainActivity extends Activity {
             // 筛选用户应用
             mSearchType = SEARCH_TYPE_USER;
             refreshList();
-        } else if (id == R.id.item_setting) {
-            // 设置
-            showSettingDialog();
+        } else if (id == R.id.item_mode) {
+            // 模式
+            showModeDialog();
+        } else if (id == R.id.item_sort) {
+            // 排序
+            showSortDialog();
         } else if (id == R.id.item_about) {
             // 关于
             showAboutDialog();
@@ -160,28 +160,58 @@ public class MainActivity extends Activity {
      * 重新获取APP列表
      */
     private void getApp() {
-        // 获取APP列表
-        switch (SP.getMode()) {
-            case 0:
-                // 正常模式
-                mPackNames = PackUtil.getPacksBySystem(this);
-                break;
-            case 1:
-                // 备用模式
-                mPackNames = PackUtil.getPacksByQueryIntent(this);
-                break;
-            default:
-                // waht？
-                mPackNames = new ArrayList<>();
-                break;
-        }
+        new Thread(() -> {
+            // 获取APP列表
+            switch (SP.getMode()) {
+                case 0:
+                    // 正常模式
+                    mPacks = PackUtil.getPacksBySystem(this);
+                    break;
+                case 1:
+                    // 备用模式
+                    mPacks = PackUtil.getPacksByQueryIntent(this);
+                    break;
+                default:
+                    // waht？
+                    mPacks = new ArrayList<>();
+                    break;
+            }
 
-        mCurPage = 0;
-        mMaxPage = mPackNames.size() / mPageSize;
-        mAppList.clear();
-        mAdapter.notifyDataSetChanged();
-        // 分页加载
-        loadPage();
+            // 将APP排序
+            Comparator<PackageInfo> comparator = (pack1, pack2) -> {
+                String appName1 = pack1.applicationInfo.loadLabel(getPackageManager()).toString();
+                String appName2 = pack2.applicationInfo.loadLabel(getPackageManager()).toString();
+                String packName1 = pack1.packageName;
+                String packName2 = pack2.packageName;
+
+                switch (SP.getSort()) {
+                    case 0:
+                        // 按APP名升序
+                        return appName1.compareTo(appName2);
+                    case 1:
+                        // 按APP名降序
+                        return appName2.compareTo(appName1);
+                    case 2:
+                        // 按包名升序
+                        return packName1.compareTo(packName2);
+                    case 3:
+                        // 按包名降序
+                        return packName2.compareTo(packName1);
+                }
+                return 0;
+            };
+            Collections.sort(mPacks, comparator);
+
+            mCurPage = 0;
+            mMaxPage = mPacks.size() / mPageSize;
+            runOnUiThread(() -> {
+                // 刷新界面要在主线程
+                mAppList.clear();
+                mAdapter.notifyDataSetChanged();
+            });
+            // 分页加载
+            loadPage();
+        }).start();
     }
 
     /**
@@ -192,10 +222,10 @@ public class MainActivity extends Activity {
             // 分页加载APP
             List<AppBean> list = new ArrayList<>();
             for (int i = mCurPage * mPageSize; i < (mCurPage + 1) * mPageSize; i++) {
-                if (i >= mPackNames.size()) {
+                if (i >= mPacks.size()) {
                     break;
                 }
-                PackageInfo pack = PackUtil.getPackInfo(this, mPackNames.get(i));
+                PackageInfo pack = mPacks.get(i);
                 if (pack == null) {
                     continue;
                 }
@@ -247,21 +277,49 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * 弹出签名信息框
+     * 弹出点击APP框
+     *
+     * @param packName 包名
      */
-    private void showSignatureDialog(String packName) {
-        final String signature = ""
-                + "MD5：\n" + SignatureUtil.getMd5(this, packName) + "\n\n"
-                + "SHA1：\n" + SignatureUtil.getSha1(this, packName) + "\n\n"
-                + "SHA1 Binary Base64：\n" + SignatureUtil.getSha1Base64(this, packName);
+    private void showAppDialog(String packName) {
+        String[] item = new String[]{getString(R.string.version_info), getString(R.string.signature)};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this, android.R.style.Theme_Material_Light_Dialog_Alert);
-        builder.setTitle(getString(R.string.signature));
-        builder.setMessage(signature);
+        builder.setItems(item, (dialog, which) -> {
+            switch (which) {
+                case 0:
+                    // 版本信息
+                    showVersionDialog(packName);
+                    break;
+                case 1:
+                    // 签名信息
+                    showSignatureDialog(packName);
+                    break;
+            }
+        });
+        builder.show();
+    }
+
+    /**
+     * 弹出版本信息框
+     *
+     * @param packName 包名
+     */
+    private void showVersionDialog(String packName) {
+        PackageInfo pack = PackUtil.getPackInfo(this, packName);
+        String appName = pack.applicationInfo.loadLabel(getPackageManager()).toString();
+        String versionName = pack.versionName;
+        String versionCode = "" + pack.versionCode;
+
+        final String str = appName + "\n\n" + versionName + "\n\n" + versionCode;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, android.R.style.Theme_Material_Light_Dialog_Alert);
+        builder.setTitle(getString(R.string.version_info));
+        builder.setMessage(str);
         builder.setPositiveButton(getString(R.string.copy), ((dialog, which) -> {
             // 复制到剪切板
             ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-            ClipData mClipData = ClipData.newPlainText("label", signature);
+            ClipData mClipData = ClipData.newPlainText("label", str);
             cm.setPrimaryClip(mClipData);
             Toast.makeText(mContext, getString(R.string.copy_to_clip_success), Toast.LENGTH_SHORT).show();
         }));
@@ -269,7 +327,39 @@ public class MainActivity extends Activity {
             // 分享
             Intent intent = new Intent();
             intent.setAction(Intent.ACTION_SEND);
-            intent.putExtra(Intent.EXTRA_TEXT, signature);
+            intent.putExtra(Intent.EXTRA_TEXT, str);
+            intent.setType("text/plain");
+            startActivity(Intent.createChooser(intent, getString(R.string.signature)));
+        }));
+        builder.show();
+    }
+
+    /**
+     * 弹出签名信息框
+     *
+     * @param packName 包名
+     */
+    private void showSignatureDialog(String packName) {
+        final String str = ""
+                + "MD5：\n" + SignatureUtil.getMd5(this, packName) + "\n\n"
+                + "SHA1：\n" + SignatureUtil.getSha1(this, packName) + "\n\n"
+                + "SHA1 Binary Base64：\n" + SignatureUtil.getSha1Base64(this, packName);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, android.R.style.Theme_Material_Light_Dialog_Alert);
+        builder.setTitle(getString(R.string.signature));
+        builder.setMessage(str);
+        builder.setPositiveButton(getString(R.string.copy), ((dialog, which) -> {
+            // 复制到剪切板
+            ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData mClipData = ClipData.newPlainText("label", str);
+            cm.setPrimaryClip(mClipData);
+            Toast.makeText(mContext, getString(R.string.copy_to_clip_success), Toast.LENGTH_SHORT).show();
+        }));
+        builder.setNegativeButton(getString(R.string.share), ((dialog, which) -> {
+            // 分享
+            Intent intent = new Intent();
+            intent.setAction(Intent.ACTION_SEND);
+            intent.putExtra(Intent.EXTRA_TEXT, str);
             intent.setType("text/plain");
             startActivity(Intent.createChooser(intent, getString(R.string.signature)));
         }));
@@ -280,19 +370,44 @@ public class MainActivity extends Activity {
     private int mSettingMode;
 
     /**
-     * 弹出设置框
+     * 弹出模式框
      */
-    private void showSettingDialog() {
+    private void showModeDialog() {
         String[] item = new String[]{getString(R.string.normal_mode), getString(R.string.standby_mode)};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this, android.R.style.Theme_Material_Light_Dialog_Alert);
-        builder.setTitle(getString(R.string.setting));
+        builder.setTitle(getString(R.string.mode));
         builder.setSingleChoiceItems(item, SP.getMode(), (dialog, which) -> {
             mSettingMode = which;
         });
         builder.setPositiveButton(getString(R.string.save), (dialog, which) -> {
             // 保存
             SP.setMode(mSettingMode);
+            getApp();
+        });
+        builder.setNegativeButton(getString(R.string.cancel), (dialog, which) -> {
+            // 取消
+        });
+        builder.show();
+    }
+
+    // 当前dialog里选择的排序
+    private int mSettingSort;
+
+    /**
+     * 弹出排序框
+     */
+    private void showSortDialog() {
+        String[] item = new String[]{getString(R.string.app_name_asc), getString(R.string.app_name_desc), getString(R.string.pack_name_asc), getString(R.string.pack_name_desc)};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, android.R.style.Theme_Material_Light_Dialog_Alert);
+        builder.setTitle(getString(R.string.sort));
+        builder.setSingleChoiceItems(item, SP.getSort(), (dialog, which) -> {
+            mSettingSort = which;
+        });
+        builder.setPositiveButton(getString(R.string.save), (dialog, which) -> {
+            // 保存
+            SP.setSort(mSettingSort);
             getApp();
         });
         builder.setNegativeButton(getString(R.string.cancel), (dialog, which) -> {

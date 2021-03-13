@@ -15,6 +15,8 @@ public class SP {
 
     // 选择的是什么模式
     private static final String MODE = "MODE";
+    // 选择的是什么排序
+    private static final String SORT = "SORT";
 
     /**
      * 初始化
@@ -42,5 +44,24 @@ public class SP {
      */
     public static int getMode() {
         return mSp.getInt(MODE, 0);
+    }
+
+    /**
+     * 设置当前选择的是什么排序
+     *
+     * @param sort sort
+     */
+    public static void setSort(int sort) {
+        mEditor.putInt(SORT, sort);
+        mEditor.commit();
+    }
+
+    /**
+     * 获取当前设置的是什么排序
+     *
+     * @return sort
+     */
+    public static int getSort() {
+        return mSp.getInt(SORT, 0);
     }
 }

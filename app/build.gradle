@@ -24,8 +24,8 @@ android {
         applicationId "cm.cym.appinfo"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 3
-        versionName "1.02"
+        versionCode 4
+        versionName "1.03"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

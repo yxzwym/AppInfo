@@ -3,7 +3,7 @@
     <string name="all_app">Browser All APP</string>
     <string name="system_app">Browser System APP</string>
     <string name="user_app">Browser User APP</string>
-    <string name="setting">Setting</string>
+    <string name="mode">Mode</string>
     <string name="normal_mode">Normal mode</string>
     <string name="standby_mode">Standby mode</string>
     <string name="confirm">Confirm</string>
@@ -15,4 +15,10 @@
     <string name="share">Share</string>
     <string name="about">About</string>
     <string name="about_info">For personal needs, it depends on the package name and signature of the APP. I found it on the Internet. There were either advertisements or no support for higher versions of Android, so I just wrote it myself. \n\nSimple function, small installation package, open source. \n\nAuthor\'s blog:\nhttps://cym.cm\n\nOpen source URL:\nhttps://github.com/AmineTsai/AppInfo</string>
+    <string name="version_info">Version</string>
+    <string name="sort">Sort</string>
+    <string name="app_name_asc">APP name asc</string>
+    <string name="app_name_desc">APP name desc</string>
+    <string name="pack_name_asc">Pack name asc</string>
+    <string name="pack_name_desc">Pack name desc</string>
 </resources>

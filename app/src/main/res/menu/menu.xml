@@ -23,9 +23,14 @@
         android:title="@string/user_app" />
 
     <item
-        android:id="@+id/item_setting"
+        android:id="@+id/item_mode"
         android:showAsAction="never"
-        android:title="@string/setting" />
+        android:title="@string/mode" />
+
+    <item
+        android:id="@+id/item_sort"
+        android:showAsAction="never"
+        android:title="@string/sort" />
 
     <item
         android:id="@+id/item_about"

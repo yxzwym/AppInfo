@@ -16,49 +16,24 @@ import java.util.List;
 public class PackUtil {
 
     /**
-     * 使用系统方法获取包名列表
+     * 使用系统方法获取包列表
      *
      * @param context context
      * @return list
      */
-    public static List<String> getPacksBySystem(Context context) {
-        List<String> packNameList = new ArrayList<>();
-        List<PackageInfo> packageInfoList = context.getPackageManager().getInstalledPackages(0);
-        for (PackageInfo packageInfo : packageInfoList) {
-            packNameList.add(packageInfo.packageName);
-        }
-        return packNameList;
-    }
-
-    /**
-     * 使用adb获取包名列表
-     * 和用系统方法获取到的是一模一样的，没区别
-     *
-     * @return list
-     */
-    public static List<String> getPacksByAdb() {
-        List<String> packNameList = new ArrayList<>();
-        try {
-            Process process = Runtime.getRuntime().exec("pm list package");
-            BufferedReader bis = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = bis.readLine()) != null) {
-                line = line.replace("package:", "");
-                packNameList.add(line);
-            }
-        } catch (Exception ignored) {
-        }
-        return packNameList;
+    public static List<PackageInfo> getPacksBySystem(Context context) {
+        return context.getPackageManager().getInstalledPackages(0);
     }
 
     /**
      * 使用queryIntentActivities获取包名列表
      * 这种方法获取到的并没有另外两种多，除非是国产手机只回复了部分列表，这个方法能获取全部
+     * 而且通过包名获取包信息，又浪费了一次性能
      *
      * @param context context
      * @return list
      */
-    public static List<String> getPacksByQueryIntent(Context context) {
+    public static List<PackageInfo> getPacksByQueryIntent(Context context) {
         List<String> packNameList = new ArrayList<>();
         List<ResolveInfo> resolveInfoList = context.getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_MAIN), 0);
         for (ResolveInfo resolveInfo : resolveInfoList) {
@@ -67,7 +42,11 @@ public class PackUtil {
                 packNameList.add(packName);
             }
         }
-        return packNameList;
+        List<PackageInfo> packageInfoList = new ArrayList<>();
+        for (String packName : packNameList) {
+            packageInfoList.add(getPackInfo(context, packName));
+        }
+        return packageInfoList;
     }
 
     /**

@@ -3,7 +3,7 @@
     <string name="all_app">查看所有APP</string>
     <string name="system_app">查看系统APP</string>
     <string name="user_app">查看用户APP</string>
-    <string name="setting">设置</string>
+    <string name="mode">模式</string>
     <string name="normal_mode">正常模式</string>
     <string name="standby_mode">备用模式</string>
     <string name="confirm">确定</string>
@@ -15,4 +15,10 @@
     <string name="copy_to_clip_success">成功复制到剪切板</string>
     <string name="about">关于</string>
     <string name="about_info">个人需求，要看APP的包名和签名，网上找了一圈，要么有广告，要么不支持高版本安卓，所以干脆自己写了个。\n\n功能简单，安装包小，开源。\n\n作者博客：\nhttps://cym.cm\n\n开源网址：\nhttps://github.com/AmineTsai/AppInfo</string>
+    <string name="version_info">版本信息</string>
+    <string name="sort">排序</string>
+    <string name="app_name_asc">按APP名字升序</string>
+    <string name="app_name_desc">按APP名字降序</string>
+    <string name="pack_name_asc">按包名升序</string>
+    <string name="pack_name_desc">按包名降序</string>
 </resources>
